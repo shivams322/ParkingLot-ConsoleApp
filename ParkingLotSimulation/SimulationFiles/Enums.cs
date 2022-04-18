@@ -1,6 +1,6 @@
 ﻿namespace ParkingLotSimulation.SimulationFiles
 {
-    public enum VehicleSize
+    public enum Size
     {
         Small,
         Medium,

@@ -1,21 +1,23 @@
-﻿using System.Collections.Generic;
-
-namespace ParkingLotSimulation.SimulationFiles
+﻿namespace ParkingLotSimulation.SimulationFiles
 {
     internal class ParkingSpot
     {
-        public int spotNumber;
+        public int SpotNumber;
 
-        public Status availabilityStatus;
+        public Size ParkingSize;
 
-        public VehicleSize vehicleSize;
+        public Status AvailabilityStatus;
 
-        public ParkingSpot(int spotNumber, VehicleSize vehicleSize, Status availabilityStatus)
+        public string ParkingSpotName
         {
-            this.spotNumber = spotNumber;
-            this.vehicleSize = vehicleSize;
-            this.availabilityStatus = availabilityStatus;
+            get { return ParkingSize + "-" + SpotNumber; }
         }
-       
+
+        public ParkingSpot(int spotNumber, Size vehicleSize, Status availabilityStatus)
+        {
+            SpotNumber = spotNumber;
+            ParkingSize = vehicleSize;
+            AvailabilityStatus = availabilityStatus;
+        }
     }
 }

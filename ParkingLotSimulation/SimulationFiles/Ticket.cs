@@ -4,27 +4,30 @@ namespace ParkingLotSimulation.SimulationFiles
 {
     internal class Ticket
     {
-        public string vehicleNumber;
+        public string VehicleNumber;
 
-        public int spotNumber;
+        public int Id;
 
-        public DateTime arrivalTime;
+        public string ParkingSpotName;
 
-        public VehicleSize vehicleSize;
+        public DateTime ArrivalTime;
 
-        public Ticket(string vehicle, int availableSpotNumber,DateTime entryTime,VehicleSize vehicleSize)
+        public Size VehicleSize;
+
+        public Ticket(int availableSpotNumber, string vehicle, string parkingSpotName, DateTime entryTime, Size vehicleSize)
         {
-            this.vehicleNumber = vehicle;
-            this.spotNumber = availableSpotNumber;
-            this.arrivalTime = entryTime;
-            this.vehicleSize = vehicleSize;
+            Id = availableSpotNumber;
+            VehicleNumber = vehicle;
+            ParkingSpotName = parkingSpotName;
+            ArrivalTime = entryTime;
+            VehicleSize = vehicleSize;
         }
 
         public void ShowTicket()
         {
-            Console.WriteLine($"Vehicle Number is {vehicleNumber}");
-            Console.WriteLine($"Parking Spot Number is {spotNumber}");
-            Console.WriteLine($"Entry Time is {arrivalTime}");
+            Console.WriteLine($"Vehicle Number is {VehicleNumber}");
+            Console.WriteLine($"Parking Space Name is {ParkingSpotName}");
+            Console.WriteLine($"Entry Time is {ArrivalTime}");
         }
     }
 }

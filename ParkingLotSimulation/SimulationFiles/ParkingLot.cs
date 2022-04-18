@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace ParkingLotSimulation.SimulationFiles
@@ -7,181 +8,175 @@ namespace ParkingLotSimulation.SimulationFiles
     {
         private static readonly List<ParkingSpot> ParkingSpots = new List<ParkingSpot>();
 
-        private static readonly List<Ticket> VehiclesList = new List<Ticket>();
-
-        public static int twoWheelerSpace, fourWheelerSpace, heavyVehiclespace;
+        private static readonly List<Ticket> VehiclesTicketList = new List<Ticket>();
 
         public static void InitializeParkingLot()
         {
             Console.Write("Enter 2 Wheeler Space: ");
-            twoWheelerSpace = Convert.ToInt32(Console.ReadLine());
-            InitialParkingSpot(1,twoWheelerSpace,VehicleSize.Small,Status.Available);
+            InitialParkingSpot(Convert.ToInt32(Console.ReadLine()), Size.Small, Status.Available);
 
             Console.Write("Enter 4 Wheeler Space: ");
-            fourWheelerSpace = Convert.ToInt32(Console.ReadLine());
-            InitialParkingSpot(twoWheelerSpace+1, fourWheelerSpace, VehicleSize.Medium, Status.Available);
+            InitialParkingSpot(Convert.ToInt32(Console.ReadLine()), Size.Medium, Status.Available);
 
             Console.Write("Enter heavy Vehicle Space: ");
-            heavyVehiclespace = Convert.ToInt32(Console.ReadLine());
-            InitialParkingSpot(twoWheelerSpace+fourWheelerSpace+1, heavyVehiclespace, VehicleSize.Large, Status.Available);
+            InitialParkingSpot(Convert.ToInt32(Console.ReadLine()), Size.Large, Status.Available);
 
             SelectOption();
         }
 
-        private static void InitialParkingSpot(int spotNumber, int totalspots,VehicleSize vehicleType,Status availabilityStatus)
+        private static void InitialParkingSpot(int totalspots, Size vehicleType, Status availabilityStatus)
         {
-            for(int i = 0; i < totalspots; i++)
+            for (int i = 0; i < totalspots; i++)
             {
-                ParkingSpots.Add(new ParkingSpot(spotNumber++, vehicleType, availabilityStatus));
+                ParkingSpots.Add(new ParkingSpot(i + 1, vehicleType, availabilityStatus));
             }
         }
 
         private static void SelectOption()
-        {   Loop:
-            Console.WriteLine("Select 0 to Display Parking Lot Occupancy details.");
-            Console.WriteLine("Select 1 to Park a Vehicle.");
-            Console.WriteLine("Select 2 to Unpark a Vehicle.");
-            Console.Write("Please select an option from given: ");////
+        {
+            Loop:
+            Console.Clear();
+            Console.WriteLine("Select 1 to Display Parking Lot Occupancy details.\nSelect 2 to Park a Vehicle. \nSelect 3 to Unpark a Vehicle.");
+            Console.Write("Please select from above options: ");
             int selectedOption = Convert.ToInt32(Console.ReadLine());
             Console.Clear();
 
             switch (selectedOption)
             {
-                case 0:
-                    {
-                        Console.Clear();
-                        DisplayParkingLotStatus(twoWheelerSpace, fourWheelerSpace, heavyVehiclespace);
-                        break;
-                    }
-
                 case 1:
                     {
-                        Console.Write("Please Enter the Type of Vehicle: 0 for 2 Wheeler/1 for 4 Wheeler/2 for Heavy Vehicle: ");
+                        foreach (Size size in Enum.GetValues(typeof(Size)))
+                        {
+                            DisplayParkingLotStatus(size);
+                        }
+                        break;
+                    }
+
+                case 2:
+                    {
+                        Console.Write("1 for 2 Wheeler \n2 for 4 Wheeler \n3 for Heavy Vehicle \nPlease Enter Number for Type of Vehicle to Park: ");
                         int vehicleType = Convert.ToInt32(Console.ReadLine());
-                        VehicleSize v1 = (VehicleSize)vehicleType;
-                        int spotNumber = AvailableSpot(vehicleType);
+                        Size v1 = (Size)(vehicleType-1);
+                        int parkingSpaceIndex = AvailableSpot(vehicleType);
+                        Console.Write("Please Enter Vehicle Registration Number: ");
+                        string vehicleNumber = Convert.ToString(Console.ReadLine());
+                        Console.Clear();
 
-                        if (spotNumber == 0)
+                        if (VehiclesTicketList.Exists(vehicle => vehicle.VehicleNumber == vehicleNumber))
                         {
-                            Console.WriteLine("There is No Available Spot");
+                            Console.WriteLine("This vehicle is already Present, please select other option.");
+                            break;
                         }
-                        else
+
+                        if (parkingSpaceIndex < 0)
                         {
-                            Console.Write("Please Enter Vehicle Registration Number: ");
-                            string vehicleNumber = Convert.ToString(Console.ReadLine());
-
-                            if (VehiclesList.Exists(vehicle => vehicle.vehicleNumber == vehicleNumber))
-                            {
-                                Console.WriteLine("This vehicle is already Present, please select other option.");
-                            }
-                            else
-                            {
-                                Ticket ticket = new Ticket(vehicleNumber, spotNumber, DateTime.Now, v1);
-                                Console.Clear();
-                                Console.WriteLine("Parking Ticket Issued At Entry For");
-                                ticket.ShowTicket();
-                                ParkingSpots[spotNumber - 1].availabilityStatus = Status.Full;
-                                VehiclesList.Add(new Ticket(vehicleNumber, spotNumber, DateTime.Now, ParkingSpots[spotNumber - 1].vehicleSize));
-                            }
-
+                            Console.WriteLine("No available Parking Spot");
+                            break;
                         }
+                        ParkingSpots[parkingSpaceIndex].AvailabilityStatus = Status.Full;
+                        Ticket ticket = new Ticket(parkingSpaceIndex, vehicleNumber, ParkingSpots[parkingSpaceIndex].ParkingSpotName, DateTime.Now, v1);
+                        VehiclesTicketList.Add(ticket);
+                        Console.WriteLine("Parking Ticket Issued At Entry For");
+                        ticket.ShowTicket();
 
                         break;
                     }
-                case 2:
+                case 3:
                     {
                         Console.Write("Please Enter Vehicle Registration Number to Unpark: ");
                         string vehicleNumber = Convert.ToString(Console.ReadLine());
 
-                        if (VehiclesList.Exists(vehicle => vehicle.vehicleNumber == vehicleNumber))
+                        if (!VehiclesTicketList.Exists(vehicle => vehicle.VehicleNumber == vehicleNumber))
                         {
-                            int index = VehiclesList.FindIndex(vehicle => vehicle.vehicleNumber == vehicleNumber);
-                            ParkingSpots[(VehiclesList[index].spotNumber) - 1].availabilityStatus = Status.Available;
-                            Ticket ticket = new Ticket(vehicleNumber, (VehiclesList[index].spotNumber), VehiclesList[index].arrivalTime, VehiclesList[index].vehicleSize);
-                            VehiclesList.RemoveAt(index);
-                            Console.Clear();
-                            Console.WriteLine("Parking Ticket At Exit For");
-                            ticket.ShowTicket();
-                            Console.WriteLine($"Exit Time is {DateTime.Now}");
+                            Console.WriteLine("There is no such Vehicle in Parking Lot.");
+                            break;
                         }
-                        else
-                        {
-                            Console.WriteLine("There is no such Vehicle is in Parking Lot.");
-                        }
+
+                        int index = VehiclesTicketList.FindIndex(vehicle => vehicle.VehicleNumber == vehicleNumber);
+                        ParkingSpots[(VehiclesTicketList[index].Id)].AvailabilityStatus = Status.Available;
+                        Console.Clear();
+
+                        Console.WriteLine("Parking Ticket Issued At Exit For");
+                        VehiclesTicketList[index].ShowTicket();
+                        Console.WriteLine($"Exit Time is {DateTime.Now}");
+                        int charge = CalculateCharge(VehiclesTicketList[index].ArrivalTime, DateTime.Now,VehiclesTicketList[index].VehicleSize);
+                        Console.WriteLine($"Parking charge is Rs.{charge}");
+                        VehiclesTicketList.RemoveAt(index);
 
                         break;
                     }
             }
-            
-            Console.WriteLine();
-            goto Loop;
+
+            Console.WriteLine("\nDo you want to go back to main menu: Y/N");
+            char answer = Convert.ToChar(Console.ReadLine());
+            if (answer == 'Y' || answer == 'y')
+                goto Loop;
+
         }
 
         private static int AvailableSpot(int vehicleType)
         {
-            int spotNum = 0;
-            foreach (var spot in ParkingSpots)
+            Nullable<int> parkingSpaceIndex = null;
+            switch (vehicleType)
             {
-                if (vehicleType == 0)
-                {
-                    if (spot.vehicleSize == VehicleSize.Small && spot.availabilityStatus == Status.Available)
+                case 1:
                     {
-                        spotNum = spot.spotNumber;
+                        parkingSpaceIndex = ParkingSpots.FindIndex(spot => spot.AvailabilityStatus == Status.Available);
                         break;
                     }
-                }
-                else if (vehicleType == 1)
-                {
-                    if (spot.vehicleSize == VehicleSize.Medium && spot.availabilityStatus == Status.Available)
+                case 2:
                     {
-                        spotNum = spot.spotNumber;
+                        parkingSpaceIndex = ParkingSpots.FindIndex(spot => spot.AvailabilityStatus == Status.Available && spot.ParkingSize > Size.Small);
                         break;
                     }
-                }
-                else if (vehicleType == 2)
-                {
-                    if (spot.vehicleSize == VehicleSize.Large && spot.availabilityStatus == Status.Available)
+                case 3:
                     {
-                        spotNum = spot.spotNumber;
+                        parkingSpaceIndex = ParkingSpots.FindIndex(spot => spot.AvailabilityStatus == Status.Available && spot.ParkingSize > Size.Medium);
                         break;
                     }
-                }
             }
 
-            return spotNum;
+            return (int)parkingSpaceIndex;
         }
-        private static void DisplayParkingLotStatus(int total2WheelerSpot, int total4WheelerSpot, int totalHeavyVehicleSpot)
+
+        private static int GetTotalSpots(Size vehicleSize)
         {
-            int freeMspot = 0, freeCspot = 0, freeHspot = 0;
-            ParkingSpots.ForEach(spot => {
-                if (spot.vehicleSize == VehicleSize.Small && spot.availabilityStatus == Status.Available)
-                {
-                    freeMspot++;
-                }
-                else if (spot.vehicleSize == VehicleSize.Medium && spot.availabilityStatus == Status.Available)
-                {
-                    freeCspot++;
-                }
-                else if (spot.vehicleSize == VehicleSize.Large && spot.availabilityStatus == Status.Available)
-                {
-                    freeHspot++;
-                }
-            });
+            return (ParkingSpots.FindAll(spot => spot.ParkingSize == vehicleSize)).Count;
+        }
 
-            Console.WriteLine($"Total 2 Wheeler Spots are: {total2WheelerSpot}");
-            Console.WriteLine($"Available 2 Wheeler Spots are: {freeMspot}");
-            Console.WriteLine($"Reserverd 2 Wheeler Spots are: {total2WheelerSpot - freeMspot}");
-            Console.WriteLine();
+        private static int GetFreeSpots(Size vehicleSize)
+        {
+            return ParkingSpots.Where(spot => spot.ParkingSize == vehicleSize && spot.AvailabilityStatus == Status.Available).Count();
+        }
+        private static void DisplayParkingLotStatus(Size vehicleSize)
+        {
+            string spotName = "";
+            int totalSpots = GetTotalSpots(vehicleSize);
+            int freeSpots = GetFreeSpots(vehicleSize);
+            switch (vehicleSize)
+            {
+                case Size.Small:
+                    spotName = "2 Wheeler Spots";
+                    break;
+                case Size.Medium:
+                    spotName = "4 Wheeler Spots";
+                    break;
+                case Size.Large:
+                    spotName = "Heavy Vehicle Spots";
+                    break;
+            }
 
-            Console.WriteLine($"Total 4 Wheeler Spots are: {total4WheelerSpot}");
-            Console.WriteLine($"Available 4 Wheeler Spots are: {freeCspot}");
-            Console.WriteLine($"Reserverd 4 Wheeler Spots are: {total4WheelerSpot - freeCspot}");
+            Console.WriteLine($"Total {spotName} are: {totalSpots}");
+            Console.WriteLine($"Available {spotName} are: {freeSpots}");
+            Console.WriteLine($"Reserverd {spotName} are: {totalSpots - freeSpots}");
             Console.WriteLine();
+        }
 
-            Console.WriteLine($"Total Heavy Vehicle Spots are: {totalHeavyVehicleSpot}");
-            Console.WriteLine($"Available Heavy Vehicle Spots are: {freeHspot}");
-            Console.WriteLine($"Reserverd Heavy Vehicle Spots are: {totalHeavyVehicleSpot - freeHspot}");
-            Console.WriteLine();
+        private static int CalculateCharge(DateTime entryTime, DateTime exitTime,Size vehicleSize)
+        {
+            int chargePerHour = vehicleSize == Size.Small ? 10 : vehicleSize == Size.Medium ? 20 : 30;
+            TimeSpan span = exitTime.Subtract(entryTime);
+            return (span.Hours + 1) * chargePerHour;
         }
     }
 }
